@@ -45,17 +45,17 @@ document.addEventListener('content_reconnect', function(e) {
 document.addEventListener('record_sent_mail', function(e) {
   var action = e.detail.action;
   chrome.storage.sync.get({
-    "recordSentMail": false
+    "civiRecordSentMail": false
   }, function (rec) {
     if (action == 'toggle') {
-      var value = !rec.recordSentMail;
+      var value = !rec.civiRecordSentMail;
       chrome.storage.sync.set({
-        recordSentMail: value
+        civiRecordSentMail: value
       }, function() {
         resetRecordButton(value);
       });
     } else if (action == 'get') {
-      resetRecordButton(rec.recordSentMail);
+      resetRecordButton(rec.civiRecordSentMail);
     }
   });
 });
@@ -97,9 +97,9 @@ document.addEventListener('content_civiurl', function(e) {
   } else {
     // If this is a sent mail, check if we're supposed to record it
     chrome.storage.sync.get({
-      "recordSentMail": false
+      "civiRecordSentMail": false
     }, function (rec) {
-      if (rec.recordSentMail) {
+      if (rec.civiRecordSentMail) {
         // send message to background
         chrome.runtime.sendMessage(detail, function(response) {
           console.log('civiurl response', response);
