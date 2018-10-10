@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "CiviGmail",
-  "description": "Gmail Extension to communicate with CiviCRM inorder to file emails as activities in CiviCRM.",
+  "description": "Gmail Extension to communicate with CiviCRM in order to file emails as activities in CiviCRM.",
   "version": "0.2.2",
   "icons": {
     "16": "icon-16.png",
@@ -32,7 +32,7 @@
   "background": {
     "scripts" : ["lib/jquery-1.11.3.min.js", "background.js"]
   },
-  "content_security_policy": "script-src https://*.google.com 'unsafe-eval'; object-src 'self'",
+  "content_security_policy": "script-src https://*.google.com 'self' 'unsafe-eval'; object-src 'self'",
   "content_scripts":  [{
     "matches": [ "https://mail.google.com/*"],
     "js": [ "lib/jquery-1.11.3.min.js", "content.js"],
