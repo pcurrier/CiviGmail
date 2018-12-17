@@ -28,7 +28,7 @@ var main = function() {
   addRecordButton();
 
   // on Email sent
-  gmail.observe.after("send_message", recordActivityOnEmailsent);
+  //gmail.observe.after("send_message", recordActivityOnEmailsent);
 }
 refresh(main);
 
