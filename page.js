@@ -23,13 +23,26 @@ var main = function() {
   recButton.addClass('recsent_bttn_container');
   document.dispatchEvent(new CustomEvent('record_sent_mail', {detail: {'action' : 'get'}}));
 
-  // Add button to record received email data
-  gmail.tools.add_toolbar_button('Record Activity' , recordActivityFromInbox);
+  // Add button to record received email data whenever layout changes
+  window.addEventListener("hashchange", addRecordButton, false);
+  addRecordButton();
 
   // on Email sent
   gmail.observe.after("send_message", recordActivityOnEmailsent);
 }
 refresh(main);
+
+// Whenever the layout changes, make sure a copy of the RecordActivity button is visible
+function addRecordButton() {
+  var toolbar = gmail.dom.toolbar();
+  var btn = toolbar.find('div.received_bttn_container');
+  if (btn.length == 0) {  // only add button once
+    var receivedButton = gmail.tools.add_toolbar_button('Record Activity' , recordActivityFromInbox);
+    receivedButton.addClass('received_bttn_container');
+  } else {
+    btn.show();  // make sure button is not hidden
+  }
+}
 
 // Function to record activity for selcted email
 function recordActivityFromInbox(){
