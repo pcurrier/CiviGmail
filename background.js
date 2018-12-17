@@ -239,6 +239,10 @@ chrome.runtime.onMessage.addListener(
       var result = checkContactExists(request);
       sendResponse({'checkContactExists': result});
     }
+    else if (request.action == "civigroups") {
+      var result = getCiviGroups(request);
+      sendResponse({'getCiviGroups': result});
+    }
   }
 );
 
@@ -393,6 +397,61 @@ function createAttachment(attachment, params) {
       },
     });
   });
+}
+
+function getCiviGroups(request) {
+  console.log("getCiviGroups request", request);
+  chrome.storage.sync.get(["civiUrl", "civiApiKey"], function (obj) {
+    var token = getAccessToken();
+    if (!token) {
+      setStatusMessage('Not authorized yet. Try "Connect Civi" first.');
+      return false;
+    }
+    request.api_key = obj.civiApiKey;
+    civiUrl = obj.civiUrl;
+    if ($.isEmptyObject(civiUrl)) { 
+      setStatusMessage('CiviCRM URL not configured or known. Check options for installed CiviGmail extension.');
+      return false;
+    }
+    civiUrl.replace(/\/$/, "");// remove any trailing slash
+    console.log("civiUrl in action:civiurl = " + civiUrl);
+    console.log('request in getCiviGroups', request);
+
+    setStatusMessage('Getting groups from civi', true);
+    if (request.count == 1) {
+      setCounterTotal(request.total);
+    }
+    $.ajax({
+      method: 'POST',
+      url: civiUrl + '/gmail/getgroups?oauth_token=' + token,
+      data: request,
+      dataType: "text",
+      crossDomain: true,
+      success: function (data, textStatus ) {
+        try {
+          result = JSON.parse(data);
+        } catch (e) {
+          console.log('JSON.parse exception: ', e);
+          result = { 'is_error': 1, 'message': e.message + ' (did you install all extension dependencies?)' };
+        }
+        if (result.is_error) {
+          setStatusMessage('Error during getGroups: ' + result.message);
+        }
+
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+          // DS: if you receive this error : the error Error in response to tabs.query: TypeError: Cannot read property 'id' of undefined
+          // try close dev consoles
+          chrome.tabs.sendMessage(tabs[0].id, {action: 'content_getgroups', result: result, params: request}, function(response) {});
+        });
+      },
+      error: function(xhr, textStatus, errorThrown){
+        setStatusMessage('Something went wrong during getGroups');
+        console.log('error test', xhr);
+        return false;
+      }
+    });
+  });
+  return true;
 }
 
 /**

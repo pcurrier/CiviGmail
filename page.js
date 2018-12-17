@@ -1,4 +1,5 @@
 var gmail;
+var selectedGroups = [];
 
 function refresh(f) {
   if((/in/.test(document.readyState)) || (undefined === window.Gmail) || (undefined === window.jQuery)) {
@@ -23,6 +24,9 @@ var main = function() {
   recButton.addClass('recsent_bttn_container');
   document.dispatchEvent(new CustomEvent('record_sent_mail', {detail: {'action' : 'get'}}));
 
+  // Add button to set group for created contacts
+  gmail.tools.add_toolbar_button('Pick Groups' , selectCiviGroup);
+
   // Add button to record received email data whenever layout changes
   window.addEventListener("hashchange", addRecordButton, false);
   addRecordButton();
@@ -43,6 +47,44 @@ function addRecordButton() {
     btn.show();  // make sure button is not hidden
   }
 }
+
+// Function to record activity for selcted email
+function selectCiviGroup(){
+  var div = '<div><p>Select the CiviCRM group(s) that contacts should be added to:</p><select id="civi_group_select" multiple="multiple" size="5"></select></div>';
+  gmail.tools.add_modal_window('Select CiviCRM Group', div, selectCiviGroupOK);
+  document.dispatchEvent(new CustomEvent('content_civigroups', { detail: {} }));
+}
+
+// Called when user clicks OK in the Select Group dialog
+function selectCiviGroupOK(){
+  if ($('#civi_group_select').has('option').length > 0) {
+    selectedGroups = [];
+    $.each($('#civi_group_select option:selected'), function(){ selectedGroups.push($(this).val()); });
+    //selectedGroups = $('#civi_group_select').val();
+    document.dispatchEvent(new CustomEvent('content_selectedgroup', { detail: { group: selectedGroups } }));
+  }
+  gmail.tools.remove_modal_window();
+}
+
+// Event listener for groups info returned from server
+document.addEventListener('page_getgroups', function(e) {
+  $('#civi_group_select').empty();
+  var groups = e.detail.result.groups;
+  groups.sort(function(a, b){ return a.title.localeCompare(b.title); });
+  selectedGroups = e.detail.selected;
+  for (var i = 0; i < groups.length; i++) {
+    var attrs = { 'value': groups[i].id, 'text': groups[i].title };
+    if (selectedGroups.indexOf(groups[i].id) >= 0) {
+      attrs['selected'] = 'selected';
+    }
+    $('#civi_group_select').append($('<option>', attrs));
+  }
+});
+
+// Event listener for selected group
+document.addEventListener('page_selectedgroup', function(e) {
+  selectedGroups = e.detail.selected;
+});
 
 // Function to record activity for selcted email
 function recordActivityFromInbox(){
@@ -126,6 +168,9 @@ function recordActivityFromInbox(){
         if (name) {
           params['name'] = name;
         }
+        if (selectedGroups.length > 0) {
+          params['group'] = selectedGroups.join(',');
+        }
         document.dispatchEvent(new CustomEvent('content_civiurl', {detail: params}));
       }
     }
@@ -155,6 +200,9 @@ function recordActivityOnEmailsent(url, body, data, response, xhr){
     if (emailAddresses[i] != '') {
       // call log activity api in civi
       var params = {email_id: '', email : emailAddresses[i], subject: emailSubject, email_body: emailBody};
+      if (selectedGroups.length > 0) {
+        params['group'] = selectedGroups.join(',');
+      }
       document.dispatchEvent(new CustomEvent('content_civiurl', {detail: params}));
     }
   }

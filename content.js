@@ -74,6 +74,15 @@ chrome.runtime.onMessage.addListener(
     if (request.action == "content_setstatus") {
       document.dispatchEvent(new CustomEvent('page_setstatus', {detail : request}));
     }
+    if (request.action == "content_getgroups") {
+      // Before returning the groups, also look up the currently selected groups (if any)
+      chrome.storage.sync.get({
+        "civiSelectedGroups": []
+      }, function (sel) {
+        var dtl = Object.assign({ 'selected': sel.civiSelectedGroups }, request);
+        document.dispatchEvent(new CustomEvent('page_getgroups', { detail: dtl }));
+      });
+    }
   }
 );
 
@@ -104,6 +113,33 @@ document.addEventListener('content_civiurl', function(e) {
         chrome.runtime.sendMessage(detail, function(response) {
           console.log('civiurl response', response);
         });
+      }
+    });
+  }
+});
+
+// Event listener for page
+document.addEventListener('content_civigroups', function(e) {
+  var detail = Object.assign({ 'action': 'civigroups' }, e.detail);
+  // send message to background
+  chrome.runtime.sendMessage(detail, function(response) {
+    console.log('civigroups response', response);
+  });
+});
+
+// Event listener for page
+document.addEventListener('content_selectedgroup', function(e) {
+  if ('group' in e.detail) {  // set to the provided groups
+    chrome.storage.sync.set({
+      civiSelectedGroups: e.detail.group
+    }, function() {
+    });
+  } else {  // get the saved value
+    chrome.storage.sync.get({
+      "civiSelectedGroups": []
+    }, function(grp) {
+      if (grp.civiSelectedGroups.length > 0) {
+        document.dispatchEvent(new CustomEvent('page_selectedgroup', { detail: { selected: grp.civiSelectedGroups } }));
       }
     });
   }
