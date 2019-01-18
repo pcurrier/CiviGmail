@@ -159,7 +159,7 @@ function recordActivityFromInbox(){
       //}
 
       // Call log activity API using the name and email address of every person on the email (excluding us)
-      var otherPeople = selectedEmailsData[i].people_involved.filter(p => p[1] !== userEmail);
+      var otherPeople = selectedEmailsData[i].people_involved.filter(p => p[1] && (userEmail.localeCompare(p[1], undefined, { 'sensitivity': 'accent' }) != 0));
       console.log('Persons on email: ', otherPeople);
       for (var p = 0; p < otherPeople.length; p++) {
         var name = otherPeople[p][0];
