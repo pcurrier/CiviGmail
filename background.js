@@ -46,7 +46,7 @@ var isTokenExpired = function() {
   var timestamp = localStorage[ACCESS_TOKEN_TIMESTAMP];
   var expiration = localStorage[ACCESS_TOKEN_EXPIRATION];
   var now = currentTimestamp();
-  if ((now - timestamp) > (expiration - 5)) {
+  if ((now - timestamp) > (expiration - 60)) {
     var message = 'Token has expired! Please connect again.';
     clearAccessToken();
     setStatusMessage(message);
